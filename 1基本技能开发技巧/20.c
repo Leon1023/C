@@ -1,3 +1,16 @@
+/* >>>>> index <<<<<
+ 
+015->技巧11：特殊等式 xyz+yzz=532
+034->技巧12：统计各种字符个数
+060->技巧13：猴子吃桃
+080->技巧14：删除字符串中连续字符
+108->技巧15：求同学的平均身高
+138->技巧16：灯塔数量（利用了穷举发）
+167->技巧17：老师分糖果
+171->技巧18：小球下落问题
+189->技巧19:彩球问题
+ 
+*/
 /****************************************
 技巧11：特殊等式 xyz+yzz=532
 ****************************************/
@@ -134,18 +147,18 @@ int main(int argc, char *argv[])
       m=n;
       sum=0;
       for (i=1; i<8; i++)
-{
-  m=m*2;
-  sum+=m;
- }
+	{
+	  m=m*2;
+	  sum+=m;
+	 }
       sum+=n;
       if (sum==765)
-{
-  printf ("the first floor has %d\n",n);
-  printf ("the eight floor has %d\n",m);
-  break;
- }
-      n++;
+	{
+	  printf ("the first floor has %d\n",n);
+	  printf ("the eight floor has %d\n",m);
+	  break;
+	 }
+	n++;
     }
   return 0;
 }
