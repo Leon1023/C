@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 /****************************************
 技巧13：应用栈实现进制转换
 ****************************************/
-
+/*
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -223,4 +223,269 @@ void main()
   printf ("result:\n");
   conversion(n,d);
 }
+*/
+/****************************************
+技巧14:创建循环队列FIFO
+****************************************/
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#define maxsize 50
+#define TRUE 1
+#define FAILE 0
 
+typedef int datatype;
+typedef struct {
+	datatype data[maxsize];//为了判别空或满队，data[0]不用于存数据
+	int front;
+	int rear;
+}sequeue;
+
+void reset(sequeue *sq)
+{
+	sq->front = 0;
+	sq->rear = 0;
+}
+
+ *当头尾指针相等时，队列为空
+ *当"(rear+1)%maxsize == front"时，队列为满
+
+int is_empty(sequeue *sq)//队列为空时返回1，不为空时返回0
+{
+	if(sq->front == sq->rear)
+		return 1;
+	else
+		return 0;
+}
+
+int is_full(sequeue *sq)//队列为满时返回1，不为满时返回0
+{
+	if((sq->rear+1)%maxsize == sq->front)
+		return 1;
+	else
+		return 0;
+}
+
+//获得循环队列的头节点，同时队列保持不变
+datatype get_front(sequeue *sq)
+{
+	if(is_empty(sq)){
+		printf("sequeue is NULL!\n");
+		return 0;
+	}
+	else
+		return(sq->data[(sq->front+1)%maxsize]);
+}
+
+//入队
+datatype in_sequeue(sequeue *sq,datatype x) //将x插入到循环队列中
+{
+	if(is_full(sq)){
+		printf("sequeue is full\n");
+		return 1; //队列已满，返回1
+	}
+	else{
+		sq->rear = (sq->rear+1)%maxsize;//队尾指针加1
+		sq->data[sq->rear] = x;//将x插入到队尾
+		return 0;//入队成功，函数返回0
+	}
+}
+
+//出队
+datatype out_sequeue(sequeue *sq) //函数返回队顶元素
+{
+	if(is_empty(sq)){
+		printf("sequeue is null\n");
+		return 0; //队列已空，返回NULL
+	}
+	else{
+		sq->front = (sq->front+1)%maxsize;//队首指针加1
+		return(sq->data[sq->front]);//出队成功，函数返回队首元素
+	}
+}
+
+int main(int argc,char *argv[])
+{
+	int i,j,x;
+	char c;
+	sequeue *q;
+	q = (sequeue *)malloc(sizeof(sequeue));
+	while(TRUE)
+	{
+		printf("\n\t请选择\t");
+		printf("\n\tA:建字符队列\t");
+		printf("\n\tB:取队列节点\t");
+		printf("\n\tC:入队\t");
+		printf("\n\tD:出队\t");
+		printf("\n\tE:结束\t\n");
+		c = getchar();
+		//fflush(stdin);
+		setbuf(stdin, NULL);
+		switch(c){
+			case 'A':
+			        reset(q);
+				printf("\n循环队列初始化完毕!\n");
+				break;
+			case 'B':
+				printf("取出的元素为:%d\n",get_front(q));
+				break;
+			case 'C':
+				printf("\n请输入入队的数据:");
+				scanf("%d",&x);
+				setbuf(stdin, NULL);
+				in_sequeue(q,x);
+				printf("\n当前循环队列的数据为:");
+				i = q->front;
+				while(i!=q->rear){
+					i = (i+1)%maxsize;
+					printf("%5d",q->data[i]);
+				}
+				break;
+			case 'D':
+				printf("\n出队元素为:%d",out_sequeue(q));
+				printf("\n当前循环队列的数据为:");
+				i = q->front;
+				while(i!=q->rear){
+					i = (i+1)%maxsize;
+					printf("%5d",q->data[i]);
+				}
+				break;
+			case 'E':
+				return 0;
+		}
+	}
+}
+*/
+/****************************************
+技巧15:创建链表队列FIFO
+****************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <ncurses.h>
+#define TRUE 1
+#define FAILE 0
+
+typedef int datatype;
+
+typedef struct link_list{
+	datatype data;
+	struct link_list *next;
+}link_list;
+
+typedef struct {
+	link_list *front;
+	link_list *rear;
+}link_queue;
+
+//初始化一个链表队列
+void reset_link_queue(link_queue *lq)
+{
+	lq->front = (link_list *)malloc(sizeof(link_list));//分配头结点空间
+	lq->front->next = NULL;//头节点指针域置空
+	lq->rear = lq->front;//尾指针指向头节点
+}
+
+//当头尾指针相等时，队列为空
+int is_empty(link_queue *lq)
+{
+	if(lq->front == lq->rear)
+		return 1;//队列为空时返回1
+	else
+		return 0;//不为空时返回0
+}
+
+
+//获得循环队列的头节点，同时队列保持不变
+datatype get_front(link_queue *lq)
+{
+	if(is_empty(lq)){
+		printf("link queue is NULL!\n");
+		return 0;
+	}
+	else
+		return(lq->front->next->data);
+}
+
+//入队
+datatype in_link_queue(link_queue *lq,datatype x) //将x插入到队尾
+{
+		lq->rear->next = (link_list *)malloc(sizeof(link_list));//分配空间给新节点，并插到队尾
+		lq->rear = lq->rear->next;//尾指针指向新插入节点
+		lq->rear->data = x;//给新节点数据域赋值
+		lq->rear->next = NULL;//新节点指针域赋值
+		return 0;//入队成功，函数返回0
+}
+
+//出队
+datatype out_link_queue(link_queue *lq) //函数返回队顶元素
+{
+	link_list *s;
+	if(is_empty(lq)){
+		printf("the link queue is empty!");//队空，函数返回0
+		return 0;
+	}
+	s = lq->front;//头结点赋给s
+	lq->front = s->next;//头结点指向原队头节点
+	free(s);//释放原头结点
+	return(lq->front->data);//出队成功，函数返回原队头节点的数据域
+	
+}
+
+int main(int argc,char *argv[])
+{
+	int i,j,x;
+	char c;
+	link_list *s;
+	link_queue *lq;
+	lq = (link_queue *)malloc(sizeof(link_queue));
+	while(TRUE)
+	{
+		printf("\n\t请选择\t");
+		printf("\n\tA:建字符队列\t");
+		printf("\n\tB:取队列节点\t");
+		printf("\n\tC:入队\t");
+		printf("\n\tD:出队\t");
+		printf("\n\tE:结束\t\n");
+//		initscr();
+//		c = getch();
+//		endwin();
+		c = getchar();
+		scanf("%*[^\n]%*c");
+		switch(c){
+			case 'A':
+			        reset_link_queue(lq);
+				printf("\n循环队列初始化完毕!\n");
+				break;
+			case 'B':
+				printf("取出的元素为:%d\n",get_front(lq));
+				break;
+			case 'C':
+				printf("\n请输入入队的数据:");
+				scanf("%d",&x);
+				setbuf(stdin, NULL);
+				in_link_queue(lq,x);
+				printf("\n当前链表队列的数据为:");
+				s = lq->front->next;
+				while(s!=NULL){
+					printf("%5d",s->data);
+					s = s->next;
+				}
+				break;
+			case 'D':
+				printf("\n出队元素为:%d",out_link_queue(lq));
+				printf("\n当前循环队列的数据为:");
+				s = lq->front->next;
+				while(s!=NULL){
+					printf("%5d",s->data);
+					s = s->next;
+				}
+				break;
+			case 'E':
+				return 0;
+			case '\n':
+				printf("here is a huiche!");
+				break;
+
+		}
+	}
+}
