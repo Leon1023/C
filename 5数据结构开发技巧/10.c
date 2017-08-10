@@ -131,7 +131,7 @@ int readin(struct aa *a)     //自定义函数，用来存储姓名及电话号�
   while(1)
     {
       scanf("%s",a[i].name);     //输入姓名
-      if(!strcmp(a[i].name,"#")) 
+      if(!str_cmp(a[i].name,"#")) 
 	break;
       scanf("%s",a[i].tel);      //输入电话号码
       i++;
@@ -146,7 +146,7 @@ void search(struct aa *b,char *x,int n)
   i=0;
   while(1)
     {
-      if (!strcmp(b[i].name,x))   //查找与输入姓名相匹配的记录
+      if (!str_cmp(b[i].name,x))   //查找与输入姓名相匹配的记录
 	{
 	  printf ("name:%s tel:%s\n",b[i].name,b[i].tel);
 	  break;
@@ -274,7 +274,7 @@ stud *search(stud *h,char *x)
   while(p)
     {
       y=p->name;
-      if(strcmp(y,x)==0)  //如果是要删除的节点，则返回地址
+      if(str_cmp(y,x)==0)  //如果是要删除的节点，则返回地址
 	return (p);
       else 
 	p=p->next;
@@ -501,4 +501,290 @@ EMACS的字符串搜索C-s向后查找，C-r向前查找，重复组合键时会
 撤销操作是C-/，而自动补全操作快捷键是M-/，切换buffer快捷键是C-x b。
 每行前边加入特定的字符串快捷键为C-x r t，即实际为rectangle操作。
 ****************************************/
+
+/****************************************
+技巧11:堆分配存储串基本操作(char *s指向字符串首地址，并以\0结尾)
+****************************************/
+#include<stdio.h>
+#include<stdlib.h>
+#define maxsize 20
+
+//求字符串长度
+int str_len(char *s)
+{
+	int len=0;
+	while(*s++!='\0')
+		len++;
+	return(len);
+}
+
+//字符串复制s->t
+void str_cpy(char *s,char *t)
+{
+	while(*s!='\0')
+		*(t++) = *(s++);
+	*t='\0';
+}
+
+//字符串连接s=s+t
+void str_concat(char *s,char *t)
+{
+	while(*s!='\0')
+		s++;
+	while(*t!='\0')
+		*(s++)=*(t++);
+	*s = '\0';
+}
+
+//求子串：将字符串s中第pos位置开始的长度为len的子串存到t中
+void str_sub(char *s,char *t,int pos,int len)
+{
+	if(pos<1 || pos> str_len(s)){
+		printf("您输入的位置有误，请重新输入：");
+		return;
+	}
+	if(len<1){
+		printf("您输入的子串长度有误，请重新输入：");
+		return;
+	}
+	s = s+pos-1;
+	while((len--)>0 && *s!='\0')
+		*(t++) = *(s++);
+	*t = '\0';
+}
+
+//比较两个字符串的大小,s>t返回1，s<t返回-1，s=t返回0
+int str_cmp(char *s,char *t)
+{
+	while(*s!='\0'&&*t!='\0'){
+		if(*s>*t)
+			return 1;
+		else if(*s<*t)
+			return -1;
+		else{
+			*(s++);
+			*(t++);
+		}
+	}
+	if(*s=='\0'&&*t=='\0')
+		return 0;
+	else if(*s=='\0'&&*t!='\0')
+		return -1;
+	else
+		return 1;
+}
+
+//字符串插入
+//将字符串t插入到字符串s的pos位置
+/*
+void str_insert(char *s,char *t,int pos)
+{
+	int i;
+	int lens = str_len(s);
+	int lent = str_len(t);
+	if(pos<1||pos>lens){
+		printf("您输入的位置有误，请重新输入：");
+		return;
+	}
+	for(i=lens;i>=(pos-1);i--)//将字符串s从被插入位置向后移动字符串t长度个空间
+		*(s+i+lent) = *(s+i); 
+	while(*t!='\0')//将字符串t复制到s串中指定位置
+		*((s++)+(pos-1))=*t++;
+}
+*/
+//从串s中的pos位置删除长度为len的子串
+void str_del(char *s,int pos,int len)
+{
+	int i,lens=str_len(s);
+	if((pos+len)>=lens)
+		*(s+pos-1) = '\0';
+	else{
+		i=pos+len-1;
+		while(*(s+i)!='\0'){
+			*(s+i-len) = *(s+i);
+			i++;
+		}
+		*(s+i-len) = '\0';
+	}
+}
+
+//串定位
+int str_index(char *s,char *t,int pos)
+{
+	int lens,lent,i=pos-1,j=0;
+	lens = str_len(s);
+	lent = str_len(t);
+	while(i<=(lens-lent)&&j<lent){
+		if(*(s+i)==*(t+j)){
+			i++;
+			j++;
+		}
+		else{
+			i = (i-j+1);
+			j = 0;
+		}
+	}
+		if(j==lent)
+			return(i-lent+1);
+		else
+			return 0;
+	}
+
+//从串s中的pos位置插入长度为len的子串t
+void str_insert(char *s,char *t,int pos)
+{
+	int i=0,lens=str_len(s),lent=str_len(t);
+	char *x;
+	//当插入位置大于字符串长度时，一律插在串的末尾
+	if(pos>=lens){
+		s += lens;
+		while(*t!='\0')
+			*s++=*t++;
+		*s = '\0';
+	}
+	//当插入位置小于串的开始位置时，一律插在串的前面
+	else if(pos<1){
+		x = s+lens;//将指针指向串的末尾'\0'的位置
+		while(lens>=0){//将串的每个元素向后移动lent个位置
+			*(x+lent) = *x;
+			x--;
+			lens--;
+		}
+		while(*t!='\0'){//将需要插入的串复制到原字符串空开的位置
+			*s++ = *t++;
+		}
+	}
+	else{
+		x = s+lens;//将指针指向串的末尾'\0'的位置
+		while((lens-pos)>=0){//从被插入位置开始，将串s依次后移lent个位置
+			*(x+lent) = *x;
+			x--;
+			lens--;
+		}
+		//将需要插入的串复制到原字符串空开的位置
+		while(*t!='\0')
+			*((x++)+1) = *(t++);
+	}
+}
+
+int main(int argc,char *argv[])
+{
+	char *s,*t,ch;
+	int i,j,pos;
+	int max = maxsize/2;
+	while(1){
+	printf("\n\t请选择");
+	printf("\n\n\t[a]建主串");
+	printf("\n\t[b]求串长");
+	printf("\n\t[c]串复制");
+	printf("\n\t[d]串连接");
+	printf("\n\t[e]求子串");
+	printf("\n\t[f]比较串");
+	printf("\n\t[g]串插入");
+	printf("\n\t[h]串删除");
+	printf("\n\t[i]串定位");
+	printf("\n\t[j]退出\n");
+	ch = getchar();
+	switch(ch){
+		case 'a':
+			printf("\n请输入字符串(长度小于%d):",max);
+			s = (char *)malloc(sizeof(char)*max);
+			scanf("%s",s);
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n你输入的字符串为：%s\n",s);
+			break;
+		case 'b':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n你输入的字符串长度为：%d\n",str_len(s));
+			break;
+		case 'c':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			t = (char *)malloc(sizeof(char)*max);
+			str_cpy(s,t);
+			printf("\n复制后的字符串为：%s\n",t);
+			break;
+		case 'd':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入需连接的字符串(长度小于%d):",max);
+			t = (char *)malloc(sizeof(char)*max);
+			scanf("%s",t);
+			setbuf(stdin, NULL);
+			str_concat(s,t);
+			printf("\n连接后的字符串为:%s\n",s);
+			break;
+		case 'e':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入子串的起始位置：");
+			scanf("%d",&i);
+			printf("\n请输入子串的长度：");
+			scanf("%d",&j);
+			setbuf(stdin, NULL);
+			t = (char *)malloc(sizeof(char)*max);
+			str_sub(s,t,i,j);
+			printf("\n截取的字符子串为：%s\n",t);
+			break;
+		case 'f':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入被比较的字符串：");
+			gets(t);
+			i = str_cmp(s,t);
+			switch(i){
+				case 1:
+					printf("\n字符串s > 字符串t\n");
+					break;
+				case -1:
+					printf("\n字符串s < 字符串t\n");
+					break;
+				case 0:
+					printf("\n字符串s = 字符串t\n");
+					break;
+			}
+			break;
+		case 'g':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入插入的子串：");
+			t = (char *)malloc(sizeof(char)*max);
+			scanf("%s",t);
+			setbuf(stdin, NULL);
+			printf("\n请输入插入的位置：");
+			scanf("%d",&pos);
+			setbuf(stdin, NULL);
+			str_insert(s,t,pos);
+			printf("\n插入子串后的字符串为：%s\n",s);
+			break;
+		case 'h':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入被删除子串的起始位置：");
+			scanf("%d",&i);
+			printf("\n请输入被删除子串的长度：");
+			scanf("%d",&j);
+			setbuf(stdin, NULL);
+			str_del(s,i,j);
+			printf("\n删除子串后的字符串为：%s\n",s);
+			break;
+		case 'i':
+			scanf("%*[^\n]%*c");
+			setbuf(stdin, NULL);
+			printf("\n请输入被定位的字符串：");
+			t = (char *)malloc(sizeof(char)*max);
+			scanf("%s",t);
+			setbuf(stdin, NULL);
+			printf("\n请输入定位的起始位置：");
+			scanf("%d",&pos);
+			setbuf(stdin, NULL);
+			printf("\n定位结果为为：%d",str_index(s,t,pos));
+			break;
+		case 'j':
+			return 0;
+	}
+	}
+}
 
