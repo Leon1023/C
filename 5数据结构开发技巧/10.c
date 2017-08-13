@@ -505,6 +505,7 @@ EMACS的字符串搜索C-s向后查找，C-r向前查找，重复组合键时会
 /****************************************
 技巧11:堆分配存储串基本操作(char *s指向字符串首地址，并以\0结尾)
 ****************************************/
+/*
 #include<stdio.h>
 #include<stdlib.h>
 #define maxsize 20
@@ -576,8 +577,7 @@ int str_cmp(char *s,char *t)
 
 //字符串插入
 //将字符串t插入到字符串s的pos位置
-/*
-void str_insert(char *s,char *t,int pos)
+void str_insert2(char *s,char *t,int pos)
 {
 	int i;
 	int lens = str_len(s);
@@ -591,7 +591,7 @@ void str_insert(char *s,char *t,int pos)
 	while(*t!='\0')//将字符串t复制到s串中指定位置
 		*((s++)+(pos-1))=*t++;
 }
-*/
+
 //从串s中的pos位置删除长度为len的子串
 void str_del(char *s,int pos,int len)
 {
@@ -787,4 +787,270 @@ int main(int argc,char *argv[])
 	}
 	}
 }
+
+*/
+/****************************************
+技巧12:链表法表示稀疏矩阵
+****************************************/
+/*
+#include<stdio.h>
+#include<stdlib.h>
+#define MAX 10
+typedef int datatype;
+
+//稀疏矩阵的十字链表结构
+typedef struct lmnode{
+	int row,col;
+	datatype e;
+	struct lmnode *right,*down;
+}lmnode;
+
+lmnode *ROW[MAX],*COL[MAX];
+
+typedef struct{
+	int r,c,n;
+	lmnode **rhead,**chead;
+}CrossList;
+
+//创建十字链表的函数
+//CrossList * creat_olmatrix()
+int main()
+{
+	int m,n,t,i,j,e;
+	lmnode *p,*q;
+	CrossList *matrix;
+	if(!(matrix=(CrossList *)malloc(sizeof(CrossList))))
+			return(NULL);
+	printf("请依次输入稀疏矩阵的行数，列数和元素个数:");
+	scanf("%d%d%d",&m,&n,&t);
+	matrix->r = m;
+	matrix->c = n;
+	matrix->n = t;
+	matrix->rhead = ROW;
+	matrix->chead = COL;
+	for(i=0;i<m;i++)
+		matrix->rhead[i] = NULL;
+	for(i=0;i<n;i++)
+		matrix->chead[i] = NULL;
+	printf("请依次输入稀疏矩阵的元素内容:");
+	scanf("%d%d%d",&i,&j,&e);
+	while(i>0){
+		if(!(p=(lmnode *)malloc(sizeof(lmnode))))
+				return(NULL);
+		p->row = i;
+		p->col = j;
+		p->e = e;
+		p->right =NULL;
+		p->down =NULL;
+		if(matrix->rhead[i-1] == NULL)
+			matrix->rhead[i-1] = p;
+		else{
+			q=matrix->rhead[i-1];
+			while(q->right&&q->right->col<(j-1))
+				q=q->right;
+			p->right = q->right;
+			q->right = p;
+		}
+		if(matrix->chead[j-1] == NULL)
+			matrix->chead[j-1] = p;
+		else{
+			for(q=matrix->chead[j-1];q->down&&q->down->row<(i-1);q=q->down);
+			p->down = q->down;
+			q->down = p;
+		}
+		printf("请依次输入稀疏矩阵的元素内容:");
+		scanf("%d%d%d",&i,&j,&e);
+	}
+	printf("您输入的矩阵为:\n");
+	for(i=0;i<(matrix->r);i++){
+		for(j=0;j<(matrix->c);j++){
+			if((matrix->rhead[i]!=NULL)&&(matrix->rhead[i]->col==(j+1)))
+				printf("%3d",matrix->rhead[i]->e);
+			else
+				printf("  0");
+		}
+		printf("\n");
+	}
+	return(0);
+}
+
+
+*/
+/****************************************
+技巧13:数组法表示稀疏矩阵,及求和运算
+****************************************/
+//为了简化问题，在嵌入式系统中只定义三元组节点数据结构，放弃了定义三元组表结构体。
+//该用三元组节点数组来表示稀疏矩阵，其中下标为0的节点的三个数据域分别用来标记稀疏矩阵
+//的总行数，总列数和非零数据个数。
+/*
+#include <stdio.h>
+#include <stdlib.h>
+typedef int datatype;
+struct node	//定义三元组节点结构体
+{
+	int row;	//行域
+	int col;	//列域
+	datatype data;	//数据域
+}A[10],B[10],S[20];	//定义三元组数组
+
+int m;			//稀疏矩阵的行数
+int n;			//稀疏矩阵的列数
+
+void display(struct node c[])	//打印稀疏矩阵的函数
+{
+	int i,j,k,d[20];
+	if(c[0].data==0){	//检查矩阵中非零元素个数
+		printf("非零元素个数为零！\n");
+		return;
+	}
+	printf("\n三元组:\n\t行号\t列号\t数据\n\t_____________________\n");	//逐行显示非零元素
+	for(i=1;i<=c[0].data;i++)
+		printf("\t%2d\t%2d\t%2d\n",c[i].row,c[i].col,c[i].data);
+	printf("\n矩阵形式:\n");			//矩阵形式显示
+	for(i=1;i<=c[0].row;i++){			//逐行显示
+		for(j=1;j<=c[0].col;j++)		//初始化辅助数组为0
+			d[j]=0;
+		for(k=1;k<=c[0].data;k++){		//逐个检查非零元素
+			if(c[k].row==i)			//如果该行有非零元素
+				d[c[k].col]=c[k].data;	//则把辅助数组的相应元素设为非零元素值
+			if(c[k].row>i)
+				break;
+		}
+		for(j=1;j<=c[0].col;j++)		//显示第i行的元素
+			printf("%4d",d[j]);
+		printf("\n");
+	}
+	getchar();					//显示完毕，等待用户输入
+}
+
+
+void init(struct node c[])					//稀疏矩阵的初始化
+{
+	int i=0;
+	while(1){
+		printf("\n\t请输入稀疏矩阵非零元素的个数:");
+		scanf("%d",&c[0].data);
+		if(c[0].data>2&&c[0].data<10)
+			break;
+		else
+			printf("\n非零元素的个数范围:3---9!\n");
+	}
+
+	printf("\n\t请按行的顺序输入%d个稀疏矩阵非零元素!\n",c[0].data);
+	for(i=1;i<=c[0].data;i++){
+		printf("\t请输入第%d个稀疏矩阵非零元素:\n",i);
+		while(1){
+			printf("\n\t行号:");
+			scanf("%d",&c[i].row);
+			if(c[i].row>0&&c[i].row<=m)
+				break;
+			else
+				printf("\n范围:1---%d!\n",m);
+		}
+		while(1){
+			printf("\n\t列号:");
+			scanf("%d",&c[i].col);
+			if(c[i].col>0&&c[i].col<=n)
+				break;
+			else
+				printf("\n范围:1---%d!\n",n);
+		}
+		printf("\n\t数据:");
+		scanf("%d",&c[i].data);
+		printf("\n");
+	}
+	display(c);
+}
+
+int main(int argc,char *argv[])
+{
+	int i,j,k,l;
+	char ch;
+	while(1){
+		printf("\n\n请选择:\n\n(1)输入稀疏矩阵的大小\n");
+		printf("\n(2)请输入稀疏矩阵A\n\n(3)请输入稀疏矩阵B\n");
+		printf("\n(4)输出稀疏矩阵S\n\n(5)退出\n");
+		ch=getchar();
+		setbuf(stdin,NULL);
+		switch(ch){
+			case '1':
+				while(1){
+					printf("\n\t矩阵行数:");
+					scanf("%d",&m);
+					if(m>2&&m<9)
+						break;
+					else
+						printf("\n矩阵行数范围:3--->8!\n");
+				}
+				while(1){
+					printf("\n\t矩阵列数:");
+					scanf("%d",&n);
+					setbuf(stdin,NULL);
+					if(n>2&&n<9)
+						break;
+					else
+						printf("\n矩阵列数范围:3---9!\n");
+				}
+				A[0].col=B[0].col=S[0].col=n;//填入稀疏矩阵的行数
+				A[0].row=B[0].row=S[0].row=m;//填入稀疏矩阵的列数
+				break;
+			case '2':
+				init(A);			//输入稀疏矩阵A
+				break;
+			case '3':
+				init(B);			//输入稀疏矩阵B
+				break;
+			case '4':
+				i=j=k=1;					//三个三元组表的操作对象序列初始化
+				while(i<=A[0].data||j<=B[0].data){		//只要A或B中还有非零元素
+					if(i>A[0].data){			//A中元素已经处理完，直接将B赋给S
+						S[k].row=B[j].row;		
+						S[k].col=B[j].col;
+						S[k].data=B[j].data;
+						k++;				//调整S的序号
+						j++;				//调整B的序号
+					}
+					else if(j>B[0].data){			//B中元素已经处理完，直接将A赋给S
+						S[k].row=A[i].row;		
+						S[k].col=A[i].col;
+						S[k].data=A[i].data;
+						k++;				//调整S的序号
+						i++;				//调整A的序号
+					}
+					else if((((A[i].row*n)+A[i].col)<((B[j].row*n)+B[j].col))){	//A[i]行列优先,将A赋给S
+						S[k].row=A[i].row;		
+						S[k].col=A[i].col;
+						S[k].data=A[i].data;
+						k++;				//调整S的序号
+						i++;				//调整A的序号
+					}
+					else if((((B[j].row*n)+B[j].col)<((A[i].row*n)+A[i].col))){	//B[i]行列优先,将B赋给S
+							S[k].row=B[j].row;	
+							S[k].col=B[j].col;
+							S[k].data=B[j].data;
+							k++;				//调整S的序号
+							j++;				//调整B的序号
+						}
+					else{						//A,B行列相同，需要相加
+						if((S[k].data=A[i].data+B[j].data)!=0){	//A,B相加
+							S[k].row=A[i].row;
+							S[k].col=A[i].col;
+							k++;				//调整S的序号，使刚保存的数据有效
+						}
+						i++;
+						j++;
+					}
+				}
+				k--;							//运算结束，使序号回调到最后一个位置上
+				S[0].data=k;
+				display(A);
+				display(B);
+				display(S);
+				break;
+			case '5':
+				return 0;
+		}
+	}
+}
+*/
 
