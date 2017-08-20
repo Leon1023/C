@@ -356,28 +356,72 @@ int main(int argc, char *argv[])
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
+#define MAXSIZE 100
+typedef int DataType;
+
 typedef struct node           //二叉链表结构声明
 {
   struct node *lchild;
-  char data;
+  DataType data;
   struct node *rchild;
 }bitnode, *bitree;           //bitnode，bitree为该结构体类型
-bitree CreatTree()           //构造二叉树
+
+bitree CreatTree(char *str)           //利用嵌套括号表示法构造二叉树
 {
-  char a;
-  bitree new;
-  scanf("%c",&a);
-  if(a=='#')
-    return NULL;
-  else
-    {
-      new=(bitree)malloc(sizeof(bitnode));
-      new->data=a;
-      new->lchild=CreatTree();   //递归创建左子树
-      new->rchild=CreatTree();   //递归创建右子树
+  bitree s[MAXSIZE],p=NULL,B=NULL;
+  char ch;
+  int top=-1,i=0,flag;
+  ch=str[0];
+  while(ch!='\0'){
+	  switch(ch){
+		  case '(':
+			  top++;
+			  s[top]=p;	//前面的节点是双亲节点，要将其压入栈里
+			  flag=1;	//即将创建左孩子
+			  break;
+		  case ',':
+			  flag=2;	//即将创建右孩子
+			  break;
+		  case ')':
+			  top--;	//左右孩子处理完毕，出栈
+			  break;
+		  default:
+			  p= (bitree)malloc(sizeof(bitnode));
+			  p->data=ch;
+			  p->lchild = p->rchild = NULL;
+			  if(B==NULL)
+				B=p;
+			  else{
+				  if(flag==1)
+					  s[top]->lchild=p;
+				  else if(flag==2)
+					  s[top]->rchild=p;
+			  }
+	  }
+	  i++;
+	  ch=str[i];
     }
-  return new;
+  return B;
 }
+
+void display(bitree B)
+{
+	if(B!=NULL){
+		printf("%c",B->data);
+		if(B->lchild!=NULL||B->rchild!=NULL){
+			printf("(");
+			display(B->lchild);
+			if(B->rchild!=NULL){
+				printf(",");
+				display(B->rchild);
+			}
+		printf(")");
+		}
+	}
+}
+
+
 void preorderTraverse(bitree bt)  //先序遍历二叉树
 {
   if(bt!=NULL)
@@ -387,6 +431,7 @@ void preorderTraverse(bitree bt)  //先序遍历二叉树
       preorderTraverse(bt->rchild);  //访问右子树
     }
 }
+
 void InorderTraverse(bitree bt) //中序遍历二叉树
 {
   if (bt!=NULL)
@@ -396,6 +441,7 @@ void InorderTraverse(bitree bt) //中序遍历二叉树
       InorderTraverse(bt->rchild);   //访问右子树
     }
 }
+
 void postorderTraverse(bitree bt)         //后序遍历二叉树
 {
   if (bt!=NULL)
@@ -405,22 +451,62 @@ void postorderTraverse(bitree bt)         //后序遍历二叉树
       printf ("%c",bt->data);        //访问根节点
     }
 }
+
 int main(int argc, char *argv[])
 {
-  bitree root;
-  root=CreatTree();                    //构造二叉树
-  printf ("preorder traversal:\n");
-  preorderTraverse(root);              //先序遍历二叉树
-  printf ("\n");
-  printf ("inorder traversal：\n");     
-  InorderTraverse(root);              //中序遍历二叉树
-  printf ("\n");
-  printf ("postorder traversal:\n");   
-  postorderTraverse(root);             //后序遍历二叉树
-  printf ("\n");
-  return 0;
+	char str[100],ch;
+	bitree p;
+	while(1){
+		printf("\n\t请选择:");
+		printf("\n\t\t(a)建立二叉树");
+		printf("\n\t\t(b)前序排列显示");
+		printf("\n\t\t(c)中序排列显示");
+		printf("\n\t\t(d)后序排列显示");
+		printf("\n\t\t(e)退出\n");
+		printf("\n\n\t你的选择:");
+		ch=getchar();
+		setbuf(stdin,NULL);
+		switch(ch){
+			case 'a':
+				printf("\n请输入嵌套括号表示的二叉树\n");
+				scanf("%s",str);
+				setbuf(stdin,NULL);
+  				printf ("\n");
+				p=CreatTree(str);                    //构造二叉树
+				printf("\n已建立的二叉树为: ");
+				display(p);
+				break;
+			case 'b':
+				scanf("%*[^\n]%*c");
+				setbuf(stdin,NULL);
+  				printf ("\n");
+				printf ("preorder bit_tree: ");
+ 				preorderTraverse(p);              //先序遍历二叉树
+  				printf ("\n");
+				break;
+			case 'c':
+				scanf("%*[^\n]%*c");
+				setbuf(stdin,NULL);
+  				printf ("\n");
+ 				printf ("inorder bit_tree：");     
+ 				InorderTraverse(p);              //中序遍历二叉树
+  				printf ("\n");
+				break;
+			case 'd':
+				scanf("%*[^\n]%*c");
+				setbuf(stdin,NULL);
+  				printf ("\n");
+ 				printf ("postorder traversal: ");   
+ 				postorderTraverse(p);             //后序遍历二叉树
+  				printf ("\n");
+				break;
+			case 'e':
+				return 0;
+		}
+	}
 }
 */
+
 /****************************************
 技巧20：用栈设置密码
 应用到了栈的定义，初始化，进栈，出栈等功能
@@ -435,7 +521,7 @@ inc
 在单链表的表尾进行插入，因此需要两个指针：队首指针front和队尾指针rear。用
 front指向队首的存储位置，用rear指向队尾节点的存储位置。
 ****************************************/
-
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -549,4 +635,5 @@ int main(int argc, char *argv[])
     } while (sel<=4);
   return 0;
 }
+*/
 
