@@ -1,0 +1,31 @@
+/************************************
+ * 01.PID算法
+ * 系统设定值为set，每次样本值为x。
+ * 比例常数KP:每次采样值与set的误差e_n＝set-x_n;所以调控信号control=KP*e_n
+ * 积分常数KI:误差sum_e_n＝e_1+e_2+...+e_n;所以调控信号control=KI*sum_e_n
+ * 微分常数 KD:误差de_n＝e_n-e_(n-1);所以调控信号control=KD*de_n
+ * 总调控值:control=KP*e+KI*sum_e+KD*de_n
+ *
+************************************/
+#include <stdio.h>
+float KP,KI,KD;
+float set,LE,sum_e;//LE->the e of last time
+
+void TaskSmpCrl(void *pdata)
+{
+	float new,e,de,crl;//crl->paramate of control function
+	while(1){
+		new=sample();
+		e=set-new;
+		de=e-LE;
+		sum_e+=e;
+		crl=KP*e+KI*sum_e+KD*de;
+		Control(crl);
+		LE=e;
+		delay(T);
+	}
+}
+
+
+
+
